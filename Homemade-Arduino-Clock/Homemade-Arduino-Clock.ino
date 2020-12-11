@@ -10,6 +10,12 @@ const int buttonDown = 2;		// Select
 const int buttonRight = 6;		// Right
 const int buttonLeft = 4;		// Left
 const int buttonTop = 8;		// Menu
+/**
+ * Button layout based on a keyboard numpad:
+ * 		  8
+ * 		4   6
+ * 		  2
+ */
 
 RTC_DS1307 rtc;						// RTC Object which holds the time
 LiquidCrystal_I2C lcd(0x20,16,2);	// LCD Display initializer
@@ -21,7 +27,7 @@ int m;								// Global minute variable
 int s;								// Global second variable
 long alarmTiming;					// Variable for alarm timings
 
-byte bell[8] = { // Custom character
+byte bell[8] = { // Custom bell character
 	B00000,
 	B00100,
 	B01110,
@@ -39,7 +45,7 @@ enum alarmFrequency {
 	once
 };
 
-class Alarm {
+class Alarm { // Alarm class which contains all needed info on an alarm
 	public:		
 		Alarm () { // Constructor
 			alarmStatus = false;
@@ -62,12 +68,12 @@ class Alarm {
 Alarm alarms[4];		// Array of 4 alarms
 
 void setup () {
-	if (!rtc.begin();) {
+	if (!rtc.begin();) {			// Check for the existance of an RTC
 		Serial.begin(9600);
 		Serial.println("RTC could not be found");
 	}
 
-	if (!rtc.isrunning()) {
+	if (!rtc.isrunning()) {			// If the RTC is already running, do not change it's date and time
 		rtc.adjust(DateTime(2020,12,10,0,0,0));
 	}
 	
@@ -97,25 +103,21 @@ void loop() {
 	for (int i = 0; i < 4; i++) {
 		if (alarms[i].alarmStatus) alarms[i].alarmStatus = checkAlarm(alarms[i]);
 	}
-	switch (button()) {
+	switch (button()) { // More cases then needed for potential to add features in the future
 		case buttonDown:
 		case buttonLeft:
 		case buttonRight:
 		case buttonTop:
-			if (alarmTiming == 0) {
-				menu(0);
-				menuActive = false;
-				lcd.clear();
-			} else {
-				alarmTiming = 0;
-			}
+			menu(0);
+			menuActive = false;
+			lcd.clear();
 	}
 	delay(20);
 }
 
 void updateDisplay() {
-	/*
-	 * Function to display the time and date on the main screen
+	/**
+	 * Function to display the time and date on the main screen.
 	 */
 	lcd.setCursor(0,0);
 	timeNow = rtc.now();
@@ -181,6 +183,10 @@ void updateDisplay() {
 }
 
 int menu(int menuIndex) {
+	/**
+	 * Menu function that handles every menu.
+	 * Uses local menu arrays in order to keep as much dynamical memory free to use for other variables.
+	 */
 	String title;
 	int len;
 	String arr[] = {"", "", "", ""};
@@ -301,6 +307,10 @@ int menu(int menuIndex) {
 }
 
 void setRTCTime() {
+	/**
+	 * Function to edit the RTC time.
+	 * Called in the menu function.
+	 */
 	lcd.clear();
 	lcd.home();
 	lcd.print("Set hour");
@@ -327,6 +337,10 @@ void setRTCTime() {
 }
 
 void setRTCDate() {
+	/**
+	 * Function to edit the RTC date.
+	 * Called in the menu function.
+	 */
 	lcd.clear();
 	lcd.home();
 	lcd.print("Set year   ");
@@ -392,6 +406,11 @@ void setRTCDate() {
 }
 
 void stopwatch() {
+	/**
+	 * Stopwatch function called from the menu function.
+	 * Press the lower button to start and pause.
+	 * Use the upper button to get out of the stopwatch or reset it when paused.
+	 */
 	lcd.clear();
 	lcd.setCursor(0,0);
 	lcd.print("Stopwatch");
@@ -451,6 +470,10 @@ void stopwatch() {
 }
 
 void kitchenTimer() {
+	/**
+	 * Kitchen Timer function called from the menu function.
+	 * Sets a countdown timer, max 99 hours, 59 minutes and 59 seconds.
+	 */
 	lcd.clear();
 	lcd.home();
 	lcd.print("Set hours");
@@ -519,6 +542,11 @@ void kitchenTimer() {
 }
 
 bool checkAlarm(Alarm al) {
+	/**
+	 * Function to handle alarms.
+	 * Checks whether or not an alarm should be triggered,
+	 * if triggered starts luminating LEDs randomly. 
+	 */
 	if (al.t.hour() == timeNow.hour() && al.t.minute() == timeNow.minute() && al.t.second() == timeNow.second() || al.alarmTriggered) {
 		int dow = timeNow.dayOfTheWeek();
 		alarmFrequency freq = al.frequency;
@@ -542,6 +570,10 @@ bool checkAlarm(Alarm al) {
 }
 
 void activatedAlarms() {
+	/**
+	 * Checks which alarms are on and off.
+	 * Used to display them on the screen when in the main screen, stopwatch and kitchen timer.
+	 */
 	String alarmString = "";
 	String str = "ABCD";
 	bool on = false;
@@ -564,6 +596,11 @@ void activatedAlarms() {
 }
 
 int button() {
+	/**
+	 * Handles all button presses, outputs 0 when no button is pressed.
+	 * When a button is pressed, it is illuminated
+	 * Waits untill the button is not pressed anymore.
+	 */
 	if (digitalRead(buttonDown)) {
 		digitalWrite(ledDown, HIGH);
 		while (digitalRead(buttonDown)) delay(20);
@@ -589,6 +626,9 @@ int button() {
 }
 
 int instantButton() {
+	/**
+	 * The same as the button() function, but does not wait untill a button isn't pressed anymore.
+	 */
 	digitalWrite(ledDown, digitalRead(buttonDown));
 	digitalWrite(ledTop, digitalRead(buttonTop));
 	digitalWrite(ledLeft, digitalRead(buttonLeft));
@@ -607,6 +647,10 @@ int instantButton() {
 }
 
 void alarmsOnOff(byte i) {
+	/**
+	 * Used in the alarm menu
+	 * Displays which alarm is toggled on.
+	 */
 	if (alarms[i].alarmStatus) {
 		lcd.print(" (On)");
 	} else {
@@ -614,14 +658,14 @@ void alarmsOnOff(byte i) {
 	}
 }
 
-void disableLeds() { // Function to disable all LEDs
+void disableLeds() {
 	digitalWrite(ledDown, 0);
 	digitalWrite(ledTop, 0);
 	digitalWrite(ledLeft, 0);
 	digitalWrite(ledRight, 0);
 }
 
-void enableLeds() { // Function to enable all LEDs, used for alarms
+void enableLeds() {
 	digitalWrite(ledDown, 1);
 	digitalWrite(ledTop, 1);
 	digitalWrite(ledLeft, 1);
@@ -629,6 +673,10 @@ void enableLeds() { // Function to enable all LEDs, used for alarms
 }
 
 int scroll(int col, int start, int min, int max) {
+	/**
+	 * Function used to scroll through numbers.
+	 * Used when setting an alarm, hour, date or kitchen timer.
+	 */
 	int out = start;
 	if (out > max) out = min;
 	if (out < min) out = max;
@@ -661,6 +709,10 @@ int scroll(int col, int start, int min, int max) {
 }
 
 void setAlarm(byte n) {
+	/**
+	 * Sets up an alarm.
+	 * Called from the menu.
+	 */
 	lcd.clear();
 	lcd.home();
 	String EDArray[2] = {"On", "Off"};
