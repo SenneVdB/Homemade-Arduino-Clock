@@ -56,13 +56,6 @@ class Alarm { // Alarm class which contains all needed info on an alarm
 		DateTime t;
 		alarmFrequency frequency;
 		bool alarmTriggered;
-		
-		void setTime(int h, int m, int s) {
-			t = DateTime(t.year(), t.month(), t.day(), h, m, s);
-		}
-		void setTime(int h, int m) {
-			t = DateTime(t.year(), t.month(), t.day(), h, m, 0);
-		}
 };
 
 Alarm alarms[4];		// Array of 4 alarms
@@ -742,12 +735,8 @@ void setAlarm(byte n) {
 	int m = scroll(3, alarms[n].t.minute(), 0, 59);
 	lcd.noCursor();
 	if (m == -1) return;
-	if (h != -1 && m != -1) {
-		timeNow = rtc.now();
-		alarms[n].setTime(h, m);
-		lcd.clear();
-		lcd.setCursor(0,0);
-	}
+	lcd.clear();
+	lcd.setCursor(0,0);
 	i = menu(4);
 	if (i == 4) {
 		return;
@@ -756,6 +745,7 @@ void setAlarm(byte n) {
 	lcd.home();
 	lcd.print("Alarm set");
 	lcd.setCursor(0,1);
+	alarms[n].t = DateTime(2020, 12, 1, h, m, 0);
 	if (i == 0) {
 		alarms[n].frequency = daily;
 		lcd.print("daily!");
