@@ -62,10 +62,14 @@ class Alarm {
 Alarm alarms[4];		// Array of 4 alarms
 
 void setup () {
-	if (!rtc.isrunning()) {
-		rtc.begin();
+	if (!rtc.begin();) {
+		Serial.begin(9600);
+		Serial.println("RTC could not be found");
 	}
-	rtc.adjust(DateTime(2020,12,7,16,32,0));
+
+	if (!rtc.isrunning()) {
+		rtc.adjust(DateTime(2020,12,10,0,0,0));
+	}
 	
 	menuActive = false;
 	
