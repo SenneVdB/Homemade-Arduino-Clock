@@ -68,7 +68,7 @@ class Alarm { // Alarm class which contains all needed info on an alarm
 Alarm alarms[4];		// Array of 4 alarms
 
 void setup () {
-	if (!rtc.begin();) {			// Check for the existance of an RTC
+	if (!rtc.begin()) {			// Check for the existance of an RTC
 		Serial.begin(9600);
 		Serial.println("RTC could not be found");
 	}
